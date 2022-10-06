@@ -5,6 +5,7 @@ usage()
   exit 2
 }
 
+# field mapping
 PRODUCTS_JSON_FILE="/workspace/search_fundamentals_course/opensearch/bbuy_products.json"
 QUERIES_JSON_FILE="/workspace/search_fundamentals_course/opensearch/bbuy_queries.json"
 DATASETS_DIR="/workspace/datasets"
