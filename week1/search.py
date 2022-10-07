@@ -8,7 +8,7 @@ from flask import (
 from week1.opensearch import get_opensearch
 
 bp = Blueprint('search', __name__, url_prefix='/search')
-
+INDEX_NAME = "bbuy_products"
 
 # Process the filters requested by the user and return a tuple that is appropriate for use in: the query, URLs displaying the filter and the display of the applied filters
 # filters -- convert the URL GET structure into an OpenSearch filter query
@@ -94,7 +94,12 @@ def query():
     print("query obj: {}".format(query_obj))
 
     #### Step 4.b.ii
-    response = None   # TODO: Replace me with an appropriate call to OpenSearch
+    response = opensearch.search(
+        body=query_obj,
+        index=INDEX_NAME
+    )
+    
+    # TODO: Replace me with an appropriate call to OpenSearch
     # Postprocess results here if you so desire
 
     #print(response)
@@ -110,17 +115,81 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
     print("Query: {} Filters: {} Sort: {}".format(user_query, filters, sort))
     query_obj = {
         'size': 10,
-        "query": {
-            # "match_all": {} # Replace me with a query that both searches and filters
-            "query_string": {
-                "fields": [“name”, “shortDescription”, “longDescription”],
-                "phrase_slop": 3
-            
+        'query': {
+            'function_score': {
+                'query': {
+                    'bool': {
+                            'must': [
+                                {'query_string': {
+                                    'query': user_query,
+                                    'fields': ['name', 'shortDescription', 'longDescription'],
+                                    'phrase_slop': 3,
+                                    }
+                                }
+                            ],
+                            'filter': filters
+                    }
+                }
             }
         },
-        "aggs": {
+        'aggs': {
             #### Step 4.b.i: create the appropriate query and aggregations here
-
+            'regularPrice': {
+                "range": {
+                    "field": "regularPrice",
+                    "ranges": [
+                        {   
+                            "key": "$",
+                            "from": 0,
+                            "to": 100
+                        },
+                        {
+                            "key": "$$",
+                            "from": 100,
+                            "to": 500
+                        },
+                        {
+                            "key": "$$$",
+                            "from": 500,
+                            "to": 1000
+                        },
+                        {
+                            "key": "$$$$",
+                            "from": 1000,
+                        }
+                    ]
+                }
+            },
+            'department': {
+                'terms': {
+                    'field': 'department.keyword',
+                    }
+                },
+            'missing_images': {
+                'missing': {
+                    'field': 'image.keyword',
+                    }
+                }
+            },
+        'highlight' : {
+            'fields': {
+                'name': {},
+                'shortDescription': {}, 
+                'longDescription': {}
+                }
+            },
+        'sort': [
+                {
+                    'regularPrice': {
+                        'order': sortDir
+                    }
+                },
+                {
+                    'name.keyword': {
+                        'order': sortDir
+                    }
+                }
+            ]
         }
-    }
+
     return query_obj
