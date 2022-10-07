@@ -117,12 +117,14 @@ def index_file(file, index_name):
             xpath_expr = mappings[idx]
             key = mappings[idx + 1]
             doc[key] = child.xpath(xpath_expr)
-        #print(doc)
+        # print(doc)
         if 'productId' not in doc or len(doc['productId']) == 0:
             continue
         #### Step 2.b: Create a valid OpenSearch Doc and bulk index 2000 docs at a time
+        #  Why use doc["sku"][0]: expected a simple value for field [_id] but found [START_ARRAY]')
         the_doc = {
             "_index": index_name,
+            "_id": doc["sku"][0],
             "_source": doc
         }
 
@@ -144,13 +146,17 @@ def index_file(file, index_name):
 @click.option('--workers', '-w', default=8, help="The number of workers to use to process files")
 def main(source_dir: str, index_name: str, workers: int):
 
-    files = glob.glob(source_dir + "/*.xml")
+    files = glob.glob(source_dir + "/*.xml")[:10]
     docs_indexed = 0
     start = perf_counter()
     with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
         futures = [executor.submit(index_file, file, index_name) for file in files]
         for future in concurrent.futures.as_completed(futures):
             docs_indexed += future.result()
+
+        # Select smaller size
+            if docs_indexed > 10:
+                break
 
     finish = perf_counter()
     logger.info(f'Done. Total docs: {docs_indexed} in {(finish - start)/60} minutes')
