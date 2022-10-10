@@ -119,18 +119,45 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
             'function_score': {
                 'query': {
                     'bool': {
-                            'must': [
-                                {'query_string': {
-                                    'query': user_query,
-                                    'fields': ['name', 'shortDescription', 'longDescription'],
-                                    'phrase_slop': 3,
-                                    }
+                        'must': [
+                            {'query_string': {
+                                'query': user_query,
+                                'fields': ['name^100', 'shortDescription^50', 'longDescription^10', 'department'],
+                                'phrase_slop': 3,
                                 }
-                            ],
-                            'filter': filters
+                            }
+                        ],
+                        'filter': filters
                     }
-                }
-            }
+                },
+                'boost_mode': 'multiply',
+                'score_mode': 'avg',
+                'functions': [
+                    {
+                        'field_value_factor': {
+                            'field': 'salesRankLongTerm',
+                            'missing': 100000000,
+                            'modifier': 'reciprocal'
+                        }
+                    },
+                    {
+                        'field_value_factor': {
+                            'field': 'salesRankShortTerm',
+                            'missing': 100000000,
+                            'modifier': 'reciprocal'
+                        }
+                    },
+                    {
+                        'field_value_factor': {
+                            'field': 'categoryPathCount',
+                            'missing': 100000000,
+                            'modifier': 'reciprocal'
+                        }
+                    }
+                ]
+            },
+    
+
         },
         'aggs': {
             #### Step 4.b.i: create the appropriate query and aggregations here

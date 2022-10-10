@@ -69,7 +69,7 @@
         }
       },
       "categoryPathCount" : {
-        "type" : "float"
+        "type" : "integer"
       },
       "categoryPathIds" : {
         "type" : "text",
@@ -350,31 +350,14 @@
         }
       },
       "salesRankLongTerm" : {
-        "type" : "text",
-        "fields" : {
-          "keyword" : {
-            "type" : "keyword",
-            "ignore_above" : 256
-          }
-        }
+        "type" : "integer"
       },
       "salesRankMediumTerm" : {
-        "type" : "text",
-        "fields" : {
-          "keyword" : {
-            "type" : "keyword",
-            "ignore_above" : 256
-          }
-        }
+        "type" : "integer"
+
       },
       "salesRankShortTerm" : {
-        "type" : "text",
-        "fields" : {
-          "keyword" : {
-            "type" : "keyword",
-            "ignore_above" : 256
-          }
-        }
+        "type" : "integer"
       },
       "shippingCost" : {
         "type" : "text",
